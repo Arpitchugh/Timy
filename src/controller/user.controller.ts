@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { CreateUserInput } from '../schema/user.schema';
-import { createUser } from '../service/user.service';
+import { CreateUserInput, VerifyUserInput } from '../schema/user.schema';
+import { createUser, findUserById } from '../service/user.service';
 import { User } from '../model/user.model';
 import sendEmail from '../utils/mailer';
 
@@ -25,4 +25,29 @@ export async function createUserHandler(
 		}
 		return res.status(500).send(error.message);
 	}
+}
+
+export async function verifyUserHandler(
+	req: Request<VerifyUserInput>,
+	res: Response
+) {
+	const id = req.params.id;
+	const verificationCode = req.params.verificationCode;
+	// find user by id
+	const user = await findUserById(id);
+	if (!user) {
+		return res.status(404).send('User not found');
+	}
+	// check if they are already verified
+	if (user.verified) {
+		return res.send('User already verified');
+	}
+	// check if verification code matches
+	if (user.verificationCode === verificationCode) {
+		// if yes, update user to be verified
+		await user.updateOne({ verified: true });
+		return res.send('User successfully verified');
+	}
+	// if verification code does not match, return 400
+	return res.status(400).send('Invalid verification code');
 }
