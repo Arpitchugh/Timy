@@ -27,10 +27,10 @@ const transporter = nodemailer.createTransport({
 async function sendEmail(payload: SendMailOptions) {
 	transporter.sendMail(payload, (err, info) => {
 		if (err) {
-			log.info(`Error occurred. ${err.message}`);
+			log.error(`Error occurred. ${err.message}`);
 			return process.exit(1);
 		}
-		console.log(`Message sent: ${info.messageId}`);
+		log.info(`Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
 	});
 }
 
