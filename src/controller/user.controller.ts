@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
-import { CreateUserInput, VerifyUserInput } from '../schema/user.schema';
-import { createUser, findUserById } from '../service/user.service';
+import {
+	CreateUserInput,
+	ForgotPasswordInput,
+	VerifyUserInput,
+} from '../schema/user.schema';
+import { createUser, findUserByEmail, findUserById } from '../service/user.service';
 import { User } from '../model/user.model';
 import sendEmail from '../utils/mailer';
 
@@ -50,4 +54,22 @@ export async function verifyUserHandler(
 	}
 	// if verification code does not match, return 400
 	return res.status(400).send('Invalid verification code');
+}
+
+export async function forgotPasswordHandler(
+	req: Request<{}, {}, ForgotPasswordInput>,
+	res: Response
+) {
+	const { email } = req.body;
+	const user = await findUserByEmail(email);
+	if (!user) {
+		return res.status(404).send('User not found');
+	}
+	await sendEmail({
+		from: 'arpiitchugh@gmail.com',
+		to: user.email,
+		subject: 'Reset your password',
+		text: `Reset your password using Verification Code: ${user.verificationCode}, Id: ${user._id}`,
+	});
+	return res.send('Password reset email sent');
 }
